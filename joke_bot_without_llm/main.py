@@ -38,6 +38,16 @@ def update_category(state: Joke_State) -> dict:
     return {"category": categories[selected_input]} 
 
 def exit_bot(state: Joke_State) -> dict:
+    print("🚪==========================================================🚪")
+    print("GOODBYE!")
+    print("============================================================")
+    print("🎊==========================================================🎊")
+    print("SESSION COMPLETE!")
+    print("============================================================")
+    print(f"📈 You enjoyed {len(state.jokes)} jokes during this session!")
+    print(f"📂 Final category: {state.category}")
+    print("🙏 Thanks for using the LangGraph Joke Bot!")
+    print("============================================================")
     return { "quit": True}
 
 def route_choice(state: Joke_State) -> str:
