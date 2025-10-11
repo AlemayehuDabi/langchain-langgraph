@@ -12,7 +12,7 @@ class Joke(BaseModel):
     
 class Joke_State(BaseModel):
     jokes: Annotated[list[Joke], add] = []
-    joke_choice: Literal["n", "c", "q"] = "n"
+    joke_choice: Literal["n", "c", "q", "l"] = "n"
     category: str = "neutral"
     language: str = "en"
     quit: bool = False
@@ -22,7 +22,7 @@ def show_menu(state: Joke_State) -> dict:
     print(f"🎭 Menu | Category: {state.category} | Jokes: {len(state.jokes)}")
     print("--------------------------------------------------")
     print("Pick an option:")
-    user_input = input("[n] 🎭 Next Joke  [c] 📂 Change Category  [q] 🚪 Quit").strip().lower()
+    user_input = input("[n] 🎭 Next Joke  [c] 📂 Change Category [l] change Langugae [q] 🚪 Quit").strip().lower()
     print("user_name: ", user_input)
     return { "joke_choice": user_input }
 
@@ -36,6 +36,11 @@ def update_category(state: Joke_State) -> dict:
     categories = ["neutral", "chuck", "all"]
     selected_input = int(input("[0] - netural, [1] - chuck, [2] - all").strip())
     return {"category": categories[selected_input]} 
+
+def update_language(state: Joke_State) -> dict:
+    categories = ["en", "de", "es", "it", "gl", "eu"]
+    selected_input = int(input("[0] - english, [1] - German, [2] - Spanish, [3] - Italian, [4] - Galician, [5] - Basque"))
+    return {"language": categories[selected_input]}
 
 def exit_bot(state: Joke_State) -> dict:
     print("🚪==========================================================🚪")
@@ -57,6 +62,8 @@ def route_choice(state: Joke_State) -> str:
         return "update_category"
     elif state.joke_choice == "q":
         return "exit_bot"
+    elif state.joke_choice == "l": 
+        return "update_language"
     return "exit_bot"
 
 def build_joke_graph() -> CompiledStateGraph:
@@ -65,6 +72,7 @@ def build_joke_graph() -> CompiledStateGraph:
     graph.add_node("show_menu", show_menu)
     graph.add_node("fetch_joke", fetch_joke)
     graph.add_node("update_category", update_category)
+    graph.add_node("update_language", update_language)
     graph.add_node("exit_bot", exit_bot)
     
     graph.set_entry_point("show_menu")
@@ -72,10 +80,12 @@ def build_joke_graph() -> CompiledStateGraph:
     graph.add_conditional_edges("show_menu",route_choice, {
         "fetch_joke": "fetch_joke",
         "update_category": "update_category",
+        "update_language": "update_language",
         "exit_bot": "exit_bot"
     })
     graph.add_edge("fetch_joke", "show_menu")
     graph.add_edge("update_category", "show_menu")
+    graph.add_edge("update_language", "show_menu")
     graph.add_edge("exit_bot", END)
     
     return graph.compile()
