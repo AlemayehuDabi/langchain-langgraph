@@ -4,6 +4,7 @@ from pyjokes import get_joke
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 from operator import add
+from generate_joke_chain import generate_chain
 
 class Joke(BaseModel):
     txt: str
@@ -21,13 +22,18 @@ def show_menu(state: Joke_State) -> dict:
     print(f"🎭 Menu | Category: {state.category} | Jokes: {len(state.jokes)}")
     print("--------------------------------------------------")
     print("Pick an option:")
-    user_input = input("[n] 🎭 Next Joke  [c] 📂 Change Category [l] change Langugae [r] reset_jokes [q] 🚪 Quit").strip().lower()
+    user_input = input("[n] 🎭 Next Joke  [c] 📂 Change Category [l] change Langugae [r] reset [q] 🚪 Quit").strip().lower()
     print("user_name: ", user_input)
     return { "joke_choice": user_input }
 
 def fetch_joke(state: Joke_State) -> dict:
-    joke = get_joke(state.language, state.category)
-    new_joke = Joke(txt=joke, joke_category=state.category)
+    prompt_text = (
+        f"You are a professional joke teller. "
+        f"Generate one short {state.category} joke in {state.language} language."
+    )
+    joke = generate_chain.invoke({"input": prompt_text})
+    # print("this is right from the llm", joke.content)
+    new_joke = Joke(txt=joke.content, joke_category=state.category)
     print(f"\n😂 {new_joke.txt}\n")
     # print(state.jokes)
     return { "jokes": [new_joke] }
