@@ -4,7 +4,7 @@ from pyjokes import get_joke
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 from operator import add
-from generate_joke_chain import generate_chain
+from generate_joke_chain import generate_chain, critique_chain
 
 class Joke(BaseModel):
     txt: str
@@ -14,8 +14,10 @@ class Joke_State(BaseModel):
     jokes: Annotated[list[Joke], add] = []
     joke_choice: Literal["n", "c", "q", "l", "r"] = "n"
     category: str = "neutral"
-    language: str = "en"
+    language: str = "English"
     quit: bool = False
+    joke_cycle_stage: int = 0
+    latest_critique: str = ""
     
 def show_menu(state: Joke_State) -> dict:
     print("============================================================")
@@ -27,25 +29,46 @@ def show_menu(state: Joke_State) -> dict:
     return { "joke_choice": user_input }
 
 def fetch_joke(state: Joke_State) -> dict:
-    prompt_text = (
-        f"You are a professional joke teller. "
-        f"Generate one short {state.category} joke in {state.language} language."
-    )
-    joke = generate_chain.invoke({"input": prompt_text})
+    messages = [
+        {"role": "user", "content": f"Generate one short {state.category} joke in {state.language} language."}
+    ]
+    if hasattr(state, "latest_critique") and state.latest_critique:
+        messages += f" Use the following critique to improve it: {state.latest_critique}"
+
+    joke = generate_chain.invoke({"messages": messages})    
     # print("this is right from the llm", joke.content)
     new_joke = Joke(txt=joke.content, joke_category=state.category)
-    print(f"\n😂 {new_joke.txt}\n")
+    if state.joke_cycle_stage < 2:
+        new_stage = state.joke_cycle_stage + 1
+    else:
+        new_stage = 0
+    
+    if new_stage < 2:
+        print(f"\n😂 {joke.content}\n")
+        print(f"The joke type: {state.category}\n")
+    
+    return { "jokes": [new_joke], "joke_cycle_stage": new_stage }
+
+def show_final_joke(state: Joke_State) -> dict:
+    print(f"\n😂 {(state.jokes)[-1].txt}\n")
+    print(f"The joke type: {(state.jokes)[-1].joke_category}\n")
+    return {"joke_cycle_stage": 0}
     # print(state.jokes)
-    return { "jokes": [new_joke] }
+    
+def Critique_joke(state: Joke_State) -> dict:
+    # print("critic joke: ", state.jokes[-1].txt, [state.jokes[-1].txt])
+    new_critique = critique_chain.invoke({"messages": [state.jokes[-1].txt]})
+    print("🧐 Putting on my comedy glasses... Let's see how we can make this joke even funnier! Critiquing...")
+    return {"has_critique_done": True, "latest_critique": new_critique.content}
 
 def update_category(state: Joke_State) -> dict:
-    categories = ["neutral", "chuck", "all"]
-    selected_input = int(input("[0] - neutral, [1] - chuck, [2] - all").strip())
+    categories = ["neutral", "developer"]
+    selected_input = int(input("[0] - Neutral, [1] - Developer").strip())
     return {"category": categories[selected_input]} 
 
 def update_language(state: Joke_State) -> dict:
-    categories = ["en", "de", "es", "it", "gl", "eu"]
-    selected_input = int(input("[0] - english, [1] - German, [2] - Spanish, [3] - Italian, [4] - Galician, [5] - Basque"))
+    categories = ["English", "German", "Spanish", "Italian", "Galician", "Dutch"]
+    selected_input = int(input("[0] - English, [1] - German, [2] - Spanish, [3] - Italian, [4] - Galician, [5] - Dutch"))
     return {"language": categories[selected_input]}
 
 def reset_jokes(state: Joke_State) -> dict:
@@ -80,11 +103,21 @@ def route_choice(state: Joke_State) -> str:
     return "exit_bot"
 
 
+def joke_flow_condition(state: Joke_State) -> str:
+    if state.joke_cycle_stage < 2:
+        return "critique_joke"
+    elif state.joke_cycle_stage == 2:
+        return "show_final_joke"
+    else:
+        return "show_menu"
+
 def build_joke_graph() -> CompiledStateGraph:
     graph = StateGraph(Joke_State)
     
     graph.add_node("show_menu", show_menu)
     graph.add_node("fetch_joke", fetch_joke)
+    graph.add_node("critique_joke", Critique_joke)
+    graph.add_node("show_final_joke", show_final_joke)
     graph.add_node("update_category", update_category)
     graph.add_node("update_language", update_language)
     graph.add_node("reset_jokes", reset_jokes)
@@ -99,7 +132,15 @@ def build_joke_graph() -> CompiledStateGraph:
         "reset_jokes": "reset_jokes",
         "exit_bot": "exit_bot"
     })
-    graph.add_edge("fetch_joke", "show_menu")
+    
+    graph.add_conditional_edges("fetch_joke", joke_flow_condition, {
+        "critique_joke": "critique_joke",
+        "show_final_joke": "show_final_joke",
+        "show_menu": "show_menu"
+    })
+    
+    graph.add_edge("show_final_joke", "show_menu")
+    graph.add_edge("critique_joke", "fetch_joke")
     graph.add_edge("update_category", "show_menu")
     graph.add_edge("update_language", "show_menu")
     graph.add_edge("reset_jokes", "show_menu")
