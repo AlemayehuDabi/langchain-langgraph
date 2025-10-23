@@ -1,0 +1,86 @@
+[
+  {
+    "id": "ai_001",
+    "canonical": "Machine Learning",
+    "aliases": ["ML", "machine-learning", "learning algorithms"],
+    "type": "field",
+    "source": ["manual", "wikipedia"],
+    "confidence": 0.98,
+    "metadata": { "category": "Artificial Intelligence" }
+  },
+  {
+    "id": "ai_002",
+    "canonical": "Deep Learning",
+    "aliases": ["neural networks", "DL", "deep neural network"],
+    "type": "subfield",
+    "source": ["manual", "wikipedia"],
+    "confidence": 0.97,
+    "metadata": { "category": "Artificial Intelligence" }
+  },
+  {
+    "id": "ai_003",
+    "canonical": "Transformer",
+    "aliases": ["transformers", "attention model", "self-attention network"],
+    "type": "architecture",
+    "source": ["arxiv", "manual"],
+    "confidence": 0.95,
+    "metadata": { "category": "Neural Architecture" }
+  },
+  {
+    "id": "ai_004",
+    "canonical": "BERT",
+    "aliases": [
+      "Bidirectional Encoder Representations from Transformers",
+      "bert model"
+    ],
+    "type": "model",
+    "source": ["huggingface"],
+    "confidence": 0.96,
+    "metadata": { "category": "Language Model" }
+  },
+  {
+    "id": "sw_001",
+    "canonical": "Python",
+    "aliases": ["python3", "py", "python language"],
+    "type": "programming_language",
+    "source": ["manual"],
+    "confidence": 0.99,
+    "metadata": { "category": "Software" }
+  },
+  {
+    "id": "sw_002",
+    "canonical": "JavaScript",
+    "aliases": ["js", "nodejs", "node.js", "ECMAScript"],
+    "type": "programming_language",
+    "source": ["manual"],
+    "confidence": 0.99,
+    "metadata": { "category": "Software" }
+  },
+  {
+    "id": "sw_003",
+    "canonical": "React",
+    "aliases": ["reactjs", "react.js", "react framework"],
+    "type": "library",
+    "source": ["npm", "manual"],
+    "confidence": 0.98,
+    "metadata": { "category": "Frontend" }
+  },
+  {
+    "id": "sw_004",
+    "canonical": "Node.js",
+    "aliases": ["node", "nodejs", "server-side javascript"],
+    "type": "runtime",
+    "source": ["npm", "manual"],
+    "confidence": 0.98,
+    "metadata": { "category": "Backend" }
+  },
+  {
+    "id": "ai_005",
+    "canonical": "Reinforcement Learning",
+    "aliases": ["RL", "reward learning", "agent-based learning"],
+    "type": "field",
+    "source": ["manual"],
+    "confidence": 0.96,
+    "metadata": { "category": "Artificial Intelligence" }
+  }
+]
