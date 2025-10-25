@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph
 import asyncio
 from pydantic import BaseModel
-from typing import Annotated
+from typing import Annotated, List
 from operator import add
 from gazetteer_load_extract import load_gazetteer_json, extract_from_gazetteer
 import spacy
@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Tag(BaseModel):
-    txt: str
+    user_input: str
+    tags: List[str]
 
 def start_input(State: Tag):
     txt = input("please provide the publication")
@@ -53,11 +54,11 @@ def llm_aggregation():
 def print_tag():
     print("these are the tag", )
     
-async def paralle_extraction():
+async def paralle_extraction(State: Tag):
     result = await asyncio.gather(
-        gazetteer_extraction(),
-        spacy_extraction(),
-        llm_extraction()
+        gazetteer_extraction(State.user_input),
+        spacy_extraction(State.user_input),
+        llm_extraction(State.user_input)
     )
     
     gazetteer_text, spacy_text, llm_text = result
@@ -71,8 +72,10 @@ def garphCondition():
     graph = StateGraph()  
     
     graph.set_entry_point("start_input", start_input)
+    graph.add_node("paralle_extraction", paralle_extraction)
     graph.add_node("llm_agregation", llm_aggregation)
     graph.add_node("print_tag", print_tag)
     
-    graph.add_edge("start_input", "llm_agregation")
+    graph.add_edge("start_input", "paralle_extraction")
+    graph.add_edge("paralle_extraction", "llm_agregation")
     graph.add_edge("llm_agregation", "print_tag")
