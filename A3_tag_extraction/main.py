@@ -10,9 +10,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature="0.2")
+
+
 class Tag(BaseModel):
     user_input: str
     tags: List[str]
+    gazetteer_tag: List[str]
+    spacy_tag: List[str]
+    llm_generated_tag: List[str]
 
 def start_input(State: Tag):
     txt = input("please provide the publication")
@@ -42,13 +48,24 @@ def llm_extraction(text: str):
                 # and return the original text you being working on after the tag extraction
                 Text: "{text}"
             """
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature="0.2")
     llm_tags = llm.invoke(prompt)
     # print("this is llm extraction node", llm_tags.content)
 
 # get all three tag  extratction and merges
-def llm_aggregation():
-    print("this is llm aggregate node")
+def llm_aggregation(State: Tag):
+    prompt = f"""
+                You are an expert AI tag aggregator. Merge the tags extracted from three sources: gazetteer, spaCy, and LLM. 
+                Remove duplicates, resolve conflicts, and refine any hallucinated or incorrect tags using the original text for context. 
+                Keep only meaningful technical tags (AI terms, software frameworks, programming languages, architectures). 
+                Return the result as JSON with two fields: `merged_tags` (each tag should include `canonical_name`, `category`, and `confidence` score) and `original_text`. 
+                Use the original text exactly as provided to validate each tag.
+                Gazetteer_tag: "{State.gazetteer_tag}"
+                Spacy_tag: "{State.spacy_tag}"
+                llm_generated_tag: "{State.llm_generated_tag}"
+                Original_Text: "{State.user_input}"
+            """
+    llm_aggregate_tags = llm.invoke(prompt)
+    # print("this is llm aggregate node", llm_aggregate_tags.content)
 
 # print the tag
 def print_tag():
