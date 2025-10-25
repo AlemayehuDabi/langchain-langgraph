@@ -1,26 +1,32 @@
 import json
-from typing import Dict, List
+from typing import Dict, List, Any
 import re
+from pathlib import Path
 
 def load_gazetteer_json(file_dir):
-    with open(file_dir, 'r', encoding='utf-8') as f:
+    full_path = Path(__file__).resolve().parent / file_dir
+    with open(full_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
-def extract_gazetteer(txt: str, gazetteer: Dict[str, List[ str]]):
-    text_lower = txt.lower()
-    extracted = {}
-    
-    for category, terms in gazetteer.items():
-        matches = []
-        
-        for term in terms:
-            # Use word boundaries for precise matches
-            pattern = r'\b' + re.escape(term) + r'\b'
-            matched = re.search(pattern, text_lower)
-            if matched:
-                matches.append(term)
+def extract_from_gazetteer(text: str, gazetteer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    text_lower = text.lower()
+    matches = []
 
-        if matches:
-            extracted[category] = matches
-    return extracted
+    for entry in gazetteer:
+        # this concatnate the two array 
+        all_terms = [entry["canonical"]] + entry.get("aliases", [])
+        # loop through the array
+        for term in all_terms:
+            pattern = r"\b" + re.escape(term.lower()) + r"\b"
+            if re.search(pattern, text_lower):
+                matches.append({
+                    "id": entry["id"],
+                    "matched": term,
+                    "canonical": entry["canonical"],
+                    "type": entry["type"],
+                    "category": entry["metadata"]["category"]
+                })
+                break
+
+    return matches
