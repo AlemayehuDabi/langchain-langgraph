@@ -5,6 +5,10 @@ from typing import Annotated
 from operator import add
 from gazetteer_load_extract import load_gazetteer_json, extract_from_gazetteer
 import spacy
+from langchain_google_genai import ChatGoogleGenerativeAI 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Tag(BaseModel):
     txt: str
@@ -19,19 +23,27 @@ def gazetteer_extraction(text: str):
     print(tag)
     return tag
 
-
-    
 # ml extraction, tag extratiojn using spacy model 
-def spacy_extraction():
+def spacy_extraction(txt: str):
     nnl = spacy.load("en_core_web_md")
-    txt="Machine learning and AI are part of modern software."
     docs = nnl(txt)
+    print(docs)
     for doc in docs:
         print("this is spacy doc: ", doc)
  
 # tag extration using llm   
-def llm_extraction():
-    print("this is llm extraction node")
+def llm_extraction(text: str):
+    prompt =f"""
+                You are an expert AI text tagger. 
+                Given the text below, identify and extract relevant technical tags such as AI terms, software frameworks, programming languages, and architectures. 
+                Return the result as a JSON list of tags (each tag should include `canonical_name`, `category`, and `confidence` score). 
+                Focus only on meaningful, domain-specific tags — avoid common words or duplicates. 
+                # and return the original text you being working on after the tag extraction
+                Text: "{text}"
+            """
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature="0.2")
+    llm_tags = llm.invoke(prompt)
+    # print("this is llm extraction node", llm_tags.content)
 
 # get all three tag  extratction and merges
 def llm_aggregation():
